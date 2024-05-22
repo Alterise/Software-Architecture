@@ -122,40 +122,24 @@ workspace {
         dynamic delivery "UC03" "Создание посылки" {
             autoLayout
             user -> delivery.delivery_service "Создать новую посылку (POST /package)"
-            delivery.delivery_service -> delivery.user_service
-            delivery.user_service -> delivery.user_cache "Найти данные пользователя"
-            delivery.user_service -> delivery.user_delivery_database "Найти данные пользователя (если не нашли в кэше)"
-            delivery.user_service -> delivery.delivery_service
             delivery.delivery_service -> delivery.package_database "Сохранить данные о посылке" 
         }
 
         dynamic delivery "UC04" "Получение посылок пользователя" {
             autoLayout
             user -> delivery.delivery_service "Получить посылку (GET /package)"
-            delivery.delivery_service -> delivery.user_service
-            delivery.user_service -> delivery.user_cache "Найти данные пользователя"
-            delivery.user_service -> delivery.user_delivery_database "Найти данные пользователя (если не нашли в кэше)"
-            delivery.user_service -> delivery.delivery_service
             delivery.delivery_service -> delivery.package_database "Найти данные о посылке" 
         }
 
         dynamic delivery "UC05" "Создание доставки" {
             autoLayout
             user -> delivery.delivery_service "Создать новую доставку (POST /delivery)"
-            delivery.delivery_service -> delivery.user_service
-            delivery.user_service -> delivery.user_cache "Найти данные пользователя"
-            delivery.user_service -> delivery.user_delivery_database "Найти данные пользователя (если не нашли в кэше)"
-            delivery.user_service -> delivery.delivery_service
             delivery.delivery_service -> delivery.user_delivery_database "Сохранить данные о доставке" 
         }
 
         dynamic delivery "UC06" "Получение информации о доставке" {
             autoLayout
             user -> delivery.delivery_service "Получить информацию о доставке (GET /delivery)"
-            delivery.delivery_service -> delivery.user_service
-            delivery.user_service -> delivery.user_cache "Найти данные пользователя"
-            delivery.user_service -> delivery.user_delivery_database "Найти данные пользователя (если не нашли в кэше)"
-            delivery.user_service -> delivery.delivery_service
             delivery.delivery_service -> delivery.user_delivery_database "Найти данные о доставке" 
         }
 
