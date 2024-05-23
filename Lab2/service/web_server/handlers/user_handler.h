@@ -303,8 +303,7 @@ public:
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
 
-                        std::ostream& ostr = response.send();
-                        ostr << user.get_id();
+                        response.send();
 
                         return;
                     } else {
