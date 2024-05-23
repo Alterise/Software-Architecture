@@ -1,6 +1,6 @@
 FROM ubuntu
 ENV TZ=Europe/Moscow
-RUN apt-get update && apt-get install -y git cmake g++ libpq-dev postgresql-client libssl-dev libmysqlclient-dev\
+RUN apt-get update && apt-get install -y git cmake g++ libpq-dev postgresql-client openssl libssl-dev libmysqlclient-dev\
     && apt-get clean
 
 
@@ -11,7 +11,7 @@ RUN git clone -b poco-1.13.3-release https://github.com/pocoproject/poco.git &&\
     cmake .. &&\
     cmake --build . --config Release &&\
     cmake --build . --target install &&\
-    cd && rm poco/* -rf 
+    cd && rm poco -rf 
 
 RUN ldconfig
 ADD ./service /service
