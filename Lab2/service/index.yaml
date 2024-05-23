@@ -153,41 +153,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    /search:
-      get:
-        summary: Поиск пользователей по маске имени и фамилии
-        parameters:
-        - name: name
-          description: Имя
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: surname
-          description: Фамилия
-          in: query
-          required: true
-          schema:
-            type: string
-        responses:
-          '200':
-            description: The users for the provided masks
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/users'
-          404:
-            description: No user found for the provided mask
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-          500:
-            description: Unexpected error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
+  /user/search:
+    get:
+      summary: Поиск пользователей по маске имени и фамилии
+      parameters:
+      - name: name
+        description: Имя
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: surname
+        description: Фамилия
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The users for the provided masks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users'
+        404:
+          description: No user found for the provided mask
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     user_id:
