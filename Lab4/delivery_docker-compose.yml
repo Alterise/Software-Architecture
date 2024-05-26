@@ -12,6 +12,7 @@ services:
       - DB_LOGIN=admin
       - DB_PASSWORD=admin
       - DB_DATABASE=archdb
+      - JWT_KEY=lrAvY1VBQMEaJIDSrhDgz5clj6oJGwqY
     depends_on:
       db:
         condition: service_healthy

@@ -9,19 +9,17 @@
 #include "Poco/JWT/Signer.h"
 
 
-bool get_identity(const std::string identity, std::string& login, std::string& password) {
+// returns login and password
+std::tuple<std::string, std::string> get_identity(const std::string& identity) {
     std::istringstream istr(identity);
-    std::ostringstream ostr;
     Poco::Base64Decoder b64in(istr);
-    copy(std::istreambuf_iterator<char>(b64in),
-         std::istreambuf_iterator<char>(),
-         std::ostreambuf_iterator<char>(ostr));
-    std::string decoded = ostr.str();
+    
+    std::string decoded;
+    b64in >> decoded;
 
     size_t pos = decoded.find(':');
-    login = decoded.substr(0, pos);
-    password = decoded.substr(pos + 1);
-    return true;
+
+    return {decoded.substr(0, pos), decoded.substr(pos + 1)};
 }
 
 std::string getJWTKey() {
@@ -29,11 +27,13 @@ std::string getJWTKey() {
         std::cout << "key loaded" << std::endl;
         return std::getenv("JWT_KEY");
     }
+
     return "0123456789ABCDEF0123456789ABCDEF";
 }
 
-std::string generate_token(long &id, std::string &login) {
+std::string generate_token(const long& id, const std::string& login) {
     Poco::JWT::Token token;
+
     token.setType("JWT");
     token.setSubject("login");
     token.payload().set("login", login);
@@ -41,20 +41,24 @@ std::string generate_token(long &id, std::string &login) {
     token.setIssuedAt(Poco::Timestamp());
 
     Poco::JWT::Signer signer(getJWTKey());
+
     return signer.sign(token, Poco::JWT::Signer::ALGO_HS256);
 }
 
-bool extract_payload(std::string &jwt_token, long &id, std::string &login) {
+bool extract_payload(const std::string &jwt_token, long& id, std::string& login) {
     if (jwt_token.length() == 0) {
         return false;
     }
 
     Poco::JWT::Signer signer(getJWTKey());
+
     try {
         Poco::JWT::Token token = signer.verify(jwt_token);
+
         if (token.payload().has("login") && token.payload().has("id")) {
             login = token.payload().getValue<std::string>("login");
             id = token.payload().getValue<long>("id");
+
             return true;
         }
 

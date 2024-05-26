@@ -4,20 +4,13 @@
 
 namespace database{
     Database::Database(){
-        _connection_string+="host=";
-        _connection_string+=Config::get().get_host();
+        Config cfg = Config::get(); 
 
-        _connection_string+=" user=";
-        _connection_string+=Config::get().get_login();
-
-        _connection_string+=" dbname=";
-        _connection_string+=Config::get().get_database();
-
-        _connection_string+=" port=";
-        _connection_string+=Config::get().get_port();
-
-        _connection_string+=" password=";
-        _connection_string+=Config::get().get_password();
+        _connection_string = "host=" +      cfg.get_host() +
+                            " user=" +      cfg.get_login() + 
+                            " dbname=" +    cfg.get_database() + 
+                            " port=" +      cfg.get_port() +
+                            " password=" +  cfg.get_password();
 
         std::cout << "Connection string:" << _connection_string << std::endl;
         

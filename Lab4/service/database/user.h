@@ -27,24 +27,23 @@ namespace database {
         const std::string &get_login() const;
         const std::string &get_password() const;
 
-        long&        id();
-        std::string& name();
-        std::string& surname();
-        std::string& email();
-        std::string& login();
-        std::string& password();
+        void set_id(const long& value);
+        void set_name(const std::string& value);
+        void set_surname(const std::string& value);
+        void set_email(const std::string& value);
+        void set_login(const std::string& value);
+        void set_password(const std::string& value);
 
         static void init();
         static std::vector<User> search(std::string name, std::string surname);
         static bool check_login_uniqueness(std::string new_login);
-        static std::optional<long> auth(std::string& login, std::string& password);
-        bool   check_credentials();
+        static std::optional<long> auth(std::string login, std::string password);
         void   create();
-        void   update_login(std::string new_login);
-        void   update_password(std::string new_password);
-        void   update_name(std::string new_name);
-        void   update_surname(std::string new_surname);
-        void   update_email(std::string new_email);
+        void   update_login();
+        void   update_password();
+        void   update_name();
+        void   update_surname();
+        void   update_email();
         void   remove();
 
         Poco::JSON::Object::Ptr toJSON() const;

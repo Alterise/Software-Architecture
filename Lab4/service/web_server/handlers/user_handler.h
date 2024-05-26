@@ -59,13 +59,13 @@ public:
                 if (form.has("name") && form.has("surname") && form.has("email") && form.has("login") && form.has("password")) {
                     database::User user;
 
-                    user.login() = form.get("login");
-                    user.email() = form.get("email");
-                    user.name() = form.get("name");
-                    user.surname() = form.get("surname");
+                    user.set_login(form.get("login"));
+                    user.set_email(form.get("email"));
+                    user.set_name(form.get("name"));
+                    user.set_surname(form.get("surname"));
 
                     _digestEngine->update(form.get("password"));
-                    user.password() = _digestEngine->digestToHex(_digestEngine->digest());
+                    user.set_password(_digestEngine->digestToHex(_digestEngine->digest()));
 
                     bool check_result = true;
                     std::string message;
@@ -89,7 +89,7 @@ public:
                         message += "<br>";
                     }
 
-                    if (!database::User::check_login_uniqueness(user.login())) {
+                    if (!database::User::check_login_uniqueness(user.get_login())) {
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_CONFLICT);
 
                         std::ostream& ostr = response.send();
@@ -122,19 +122,22 @@ public:
                         return;
                     }
                 }
-            } else if (uri.getPath() == "/auth") {
+            } else if (uri.getPath() == "/user/auth") {
                 std::string scheme;
                 std::string info;
+
                 request.getCredentials(scheme, info);
+
                 std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
 
-                std::string login, password;
-                if (scheme == "Basic")
-                {
-                    get_identity(info, login, password);
-                    if (auto id = database::User::auth(login, password))
-                    {
-                        std::string token = generate_token(*id,login);
+                if (scheme == "Basic") {
+                    auto [login, password] = get_identity(info);
+
+                    _digestEngine->update(password);
+                    password = _digestEngine->digestToHex(_digestEngine->digest());
+
+                    if (auto id = database::User::auth(login, password)) {
+                        std::string token = generate_token(*id, login);
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");

@@ -31,23 +31,3 @@ const std::string &Config::get_password() const {
 const std::string &Config::get_database() const {
     return _database;
 }
-
-std::string &Config::port() {
-    return _port;
-}
-
-std::string &Config::host() {
-    return _host;
-}
-
-std::string &Config::login() {
-    return _login;
-}
-
-std::string &Config::password() {
-    return _password;
-}
-
-std::string &Config::database() {
-    return _database;
-}

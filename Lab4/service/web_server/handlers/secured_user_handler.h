@@ -22,20 +22,23 @@ public:
     SecuredHandler(const std::string& format, std::shared_ptr<Poco::Crypto::DigestEngine> digestEngine) :
     _format(format), _digestEngine(digestEngine) {}
 
-    void handleRequest(Poco::Net::HTTPServerRequest &request,
-                       Poco::Net::HTTPServerResponse &response)
-    {
+    void handleRequest(Poco::Net::HTTPServerRequest &request, Poco::Net::HTTPServerResponse &response) {
         Poco::Net::HTMLForm form(request, request.stream());
-        try
-        {
+
+        try {
             std::string scheme;
             std::string info;
+            
             long id {-1};
+
             std::string login;
+
             request.getCredentials(scheme, info);
+
             std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
+            
             if(scheme == "Bearer") {
-                if(!extract_payload(info,id,login)) {
+                if(!extract_payload(info, id, login)) {
                     response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
                     response.setChunkedTransferEncoding(true);
                     response.setContentType("application/json");
@@ -44,175 +47,147 @@ public:
                     root->set("title", "Internal exception");
                     root->set("status", "403");
                     root->set("detail", "user not authorized");
-                    root->set("instance", "/pizza_order");
+                    root->set("instance", "/user");
                     std::ostream &ostr = response.send();
                     Poco::JSON::Stringifier::stringify(root, ostr);
                     return;                   
                 }
             }
+
             std::cout << "id:" << id << " login:" << login << std::endl;
 
             if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT) {
-                if (form.has("login") && form.has("password")) {
-                    database::User user;
+                database::User user;
 
-                    user.login() = form.get("login");
+                user.set_id(id);
 
-                    _digestEngine->update(form.get("password"));
-                    user.password() = _digestEngine->digestToHex(_digestEngine->digest());
-
-                    if (!user.check_credentials()) {
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
+                if (form.has("login")) {
+                    user.set_login(form.get("login"));
+                    
+                    if (!database::User::check_login_uniqueness(user.get_login())) {
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_CONFLICT);
 
                         std::ostream& ostr = response.send();
-                        ostr << "Invalid login or password";
+                        ostr << "Login must be unique<br>";
 
                         response.send();
 
                         return;
                     }
 
-                    if (form.has("new_login")) {
-                        auto new_login = form.get("new_login");
-                        if (!database::User::check_login_uniqueness(new_login)) {
-                            response.setStatus(Poco::Net::HTTPResponse::HTTP_CONFLICT);
+                    user.update_login();
 
-                            std::ostream& ostr = response.send();
-                            ostr << "Login must be unique<br>";
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
 
-                            response.send();
+                    std::ostream& ostr = response.send();
+                    ostr << user.get_id();
 
-                            return;
-                        }
+                    return;
+                } else if (form.has("password")) {
+                    user.set_password(form.get("password"));
 
-                        user.update_login(new_login);
+                    user.update_password();
 
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
 
-                        std::ostream& ostr = response.send();
-                        ostr << user.get_id();
+                    std::ostream& ostr = response.send();
+                    ostr << user.get_id();
 
-                        return;
-                    } else if (form.has("new_password")) {
-                        user.update_password(form.get("new_password"));
+                    return;
+                } else if (form.has("name")) {
+                    user.set_name(form.get("name"));
 
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
-
-                        std::ostream& ostr = response.send();
-                        ostr << user.get_id();
-
-                        return;
-                    } else if (form.has("new_name")) {
-                        auto new_name = form.get("new_name");
-
-                        std::string reason;
-                        if (!check_name(new_name, reason)) {
-                            response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
-
-                            std::ostream& ostr = response.send();
-                            ostr << reason + "<br>";
-
-                            response.send();
-
-                            return;
-                        }
-
-                        user.update_name(new_name);
-
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
+                    std::string reason;
+                    if (!check_name(user.get_name(), reason)) {
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
 
                         std::ostream& ostr = response.send();
-                        ostr << user.get_id();
+                        ostr << reason + "<br>";
 
-                        return;
-                    } else if (form.has("new_surname")) {
-                        auto new_surname = form.get("new_surname");
-
-                        std::string reason;
-                        if (!check_name(new_surname, reason)) {
-                            response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
-
-                            std::ostream& ostr = response.send();
-                            ostr << reason + "<br>";
-
-                            response.send();
-
-                            return;
-                        }
-
-                        user.update_surname(new_surname);
-
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
-
-                        std::ostream& ostr = response.send();
-                        ostr << user.get_id();
-
-                        return;
-                    } else if (form.has("new_email")) {
-                        auto new_email = form.get("new_email");
-                        
-                        std::string reason;
-                        if (!check_email(new_email, reason)) {
-                            response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
-
-                            std::ostream& ostr = response.send();
-                            ostr << reason + "<br>";
-
-                            response.send();
-
-                            return;
-                        }
-
-                        user.update_email(new_email);
-
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
-
-                        std::ostream& ostr = response.send();
-                        ostr << user.get_id();
+                        response.send();
 
                         return;
                     }
+
+                    user.update_name();
+
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+
+                    std::ostream& ostr = response.send();
+                    ostr << user.get_id();
+
+                    return;
+                } else if (form.has("surname")) {
+                    user.set_surname(form.get("surname"));
+
+                    std::string reason;
+                    if (!check_name(user.get_surname(), reason)) {
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
+
+                        std::ostream& ostr = response.send();
+                        ostr << reason + "<br>";
+
+                        response.send();
+
+                        return;
+                    }
+
+                    user.update_surname();
+
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+
+                    std::ostream& ostr = response.send();
+                    ostr << user.get_id();
+
+                    return;
+                } else if (form.has("email")) {
+                    user.set_email(form.get("email"));
+
+                    std::string reason;
+                    if (!check_email(user.get_email(), reason)) {
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
+
+                        std::ostream& ostr = response.send();
+                        ostr << reason + "<br>";
+
+                        response.send();
+
+                        return;
+                    }
+
+                    user.update_email();
+
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+
+                    std::ostream& ostr = response.send();
+                    ostr << user.get_id();
+
+                    return;
                 }
             } else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE) {
-                if (form.has("login") && form.has("password")) {
-                    database::User user;
+                database::User user;
 
-                    user.login() = form.get("login");
+                user.set_id(id);
 
-                    _digestEngine->update(form.get("password"));
-                    user.password() = _digestEngine->digestToHex(_digestEngine->digest());
+                user.remove();
 
-                    if (user.check_credentials()) {
-                        user.remove();
+                response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                response.setChunkedTransferEncoding(true);
+                response.setContentType("application/json");
 
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-                        response.setChunkedTransferEncoding(true);
-                        response.setContentType("application/json");
+                response.send();
 
-                        response.send();
-
-                        return;
-                    } else {
-                        response.setStatus(Poco::Net::HTTPResponse::HTTP_NOT_FOUND);
-
-                        std::ostream& ostr = response.send();
-                        ostr << "Invalid login or password";
-
-                        response.send();
-
-                        return;
-                    }
-                }
+                return;
             }
             
         }

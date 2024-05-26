@@ -23,7 +23,7 @@ public:
         uri.getPathSegments(path_segments);
 
         if (!path_segments.empty() && path_segments[0] == "user") { 
-            if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT && request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE) { 
+            if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT || request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE) { 
                 return new SecuredHandler(_format, _digestEngine);
             } else {
                 return new UserHandler(_format, _digestEngine);

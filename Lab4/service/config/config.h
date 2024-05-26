@@ -14,12 +14,6 @@ private:
 public:
     static Config& get();
 
-    std::string& port();
-    std::string& host();
-    std::string& login();
-    std::string& password();
-    std::string& database();
-
     const std::string& get_port() const;
     const std::string& get_host() const;
     const std::string& get_login() const;

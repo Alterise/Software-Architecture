@@ -19,18 +19,17 @@ namespace database {
     void User::init() {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement create_stmt(session);
-            create_stmt << "CREATE TABLE IF NOT EXISTS users (id SERIAL,"
-                        << "login VARCHAR(256) NOT NULL,"
-                        << "password VARCHAR(256) NOT NULL,"
-                        << "email VARCHAR(256) NULL,"
-                        << "name VARCHAR(256) NOT NULL,"
-                        << "surname VARCHAR(256) NOT NULL,"
-                        << "CONSTRAINT users_login_key UNIQUE (login),"
-                        << "CONSTRAINT users_pkey PRIMARY KEY (id));",
+            Statement init_db(session);
+            init_db << "CREATE TABLE IF NOT EXISTS users (id SERIAL,"
+                    << "login VARCHAR(256) NOT NULL,"
+                    << "password VARCHAR(256) NOT NULL,"
+                    << "email VARCHAR(256) NULL,"
+                    << "name VARCHAR(256) NOT NULL,"
+                    << "surname VARCHAR(256) NOT NULL,"
+                    << "CONSTRAINT users_login_key UNIQUE (login),"
+                    << "CONSTRAINT users_pkey PRIMARY KEY (id));",
                 now;
         }
-
         catch (Poco::Data::PostgreSQL::PostgreSQLException& e) {
             std::cout << "connection:" << e.displayText() << std::endl;
             throw;
@@ -60,20 +59,21 @@ namespace database {
         Poco::Dynamic::Var result = parser.parse(str);
         Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
-        user.id() = object->getValue<long>("id");
-        user.login() = object->getValue<std::string>("login");
-        user.password() = object->getValue<std::string>("password");
-        user.email() = object->getValue<std::string>("email");
-        user.name() = object->getValue<std::string>("name");
-        user.surname() = object->getValue<std::string>("surname");
+        user.set_id(object->getValue<long>("id"));
+        user.set_login(object->getValue<std::string>("login"));
+        user.set_password(object->getValue<std::string>("password"));
+        user.set_email(object->getValue<std::string>("email"));
+        user.set_name(object->getValue<std::string>("name"));
+        user.set_surname(object->getValue<std::string>("surname"));
 
         return user;
     }
 
-    std::optional<long> User::auth(std::string &login, std::string &password) {
+    std::optional<long> User::auth(std::string login, std::string password) {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement select(session);
+
             long id;
             select << "SELECT id FROM users where login=$1 and password=$2",
                 into(id),
@@ -83,8 +83,10 @@ namespace database {
 
             select.execute();
             Poco::Data::RecordSet rs(select);
-            if (rs.moveFirst())
+
+            if (rs.moveFirst()) {
                 return id;
+            }
         }
 
         catch (Poco::Data::PostgreSQL::ConnectionException &e) {
@@ -104,23 +106,23 @@ namespace database {
             Poco::Data::Session session = database::Database::get().create_session();
             Statement select(session);
             std::vector<User> result;
-            User a;
+            User tmp;
             name += "%";
             surname += "%";
             select << "SELECT id, login, password, email, name, surname FROM users where name LIKE $1 and surname LIKE $2",
-                into(a._id),
-                into(a._login),
-                into(a._password),
-                into(a._email),
-                into(a._name),
-                into(a._surname),
+                into(tmp._id),
+                into(tmp._login),
+                into(tmp._password),
+                into(tmp._email),
+                into(tmp._name),
+                into(tmp._surname),
                 use(name),
                 use(surname),
                 range(0, 1);
 
             while (!select.done()) {
                 if (select.execute()) {
-                    result.push_back(a);
+                    result.push_back(tmp);
                 }
             }
 
@@ -203,28 +205,16 @@ namespace database {
         return false;
     }
 
-    void User::update_login(std::string new_login) {
+    void User::update_login() {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement update(session);
 
-            update << "UPDATE users SET login=$1 WHERE login=$2",
-                use(new_login),
-                use(_login);
+            update << "UPDATE users SET login=$1 WHERE id=$2",
+                use(_login),
+                use(_id);
 
             update.execute();
-
-            _login = new_login;
-
-            Poco::Data::Statement select(session);
-            select << "SELECT id FROM users where login=$1",
-                into(_id),
-                use(_login),
-                range(0, 1);
-
-            if (!select.done()) {
-                select.execute();
-            }
             
             std::cout << "updated: " << _id << std::endl;
         }
@@ -239,26 +229,40 @@ namespace database {
         }
     }
 
-    void User::update_password(std::string new_password) {
+    void User::update_password() {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement update(session);
 
-            update << "UPDATE users SET password=$1 WHERE login=$2",
-                use(new_password),
-                use(_login);
+            update << "UPDATE users SET password=$1 WHERE id=$2",
+                use(_password),
+                use(_id);
 
             update.execute();
+           
+            std::cout << "updated: " << _id << std::endl;
+        }
+        catch (Poco::Data::PostgreSQL::ConnectionException& e) {
+            std::cout << "connection error: " << e.what() << std::endl;
+            throw;
+        }
+        catch (Poco::Data::PostgreSQL::StatementException& e) {
 
-            Poco::Data::Statement select(session);
-            select << "SELECT id FROM users where login=$1",
-                into(_id),
-                use(_login),
-                range(0, 1);
+            std::cout << "statement error: " << e.what() << std::endl;
+            throw;
+        }
+    }
 
-            if (!select.done()) {
-                select.execute();
-            }
+    void User::update_name() {
+        try {
+            Poco::Data::Session session = database::Database::get().create_session();
+            Poco::Data::Statement update(session);
+
+            update << "UPDATE users SET name=$1 WHERE id=$2",
+                use(_name),
+                use(_id);
+
+            update.execute();
             
             std::cout << "updated: " << _id << std::endl;
         }
@@ -273,26 +277,16 @@ namespace database {
         }
     }
 
-    void User::update_name(std::string new_name) {
+    void User::update_surname() {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement update(session);
 
-            update << "UPDATE users SET name=$1 WHERE login=$2",
-                use(new_name),
-                use(_login);
+            update << "UPDATE users SET surname=$1 WHERE id=$2",
+                use(_surname),
+                use(_id);
 
             update.execute();
-
-            Poco::Data::Statement select(session);
-            select << "SELECT id FROM users where login=$1",
-                into(_id),
-                use(_login),
-                range(0, 1);
-
-            if (!select.done()) {
-                select.execute();
-            }
             
             std::cout << "updated: " << _id << std::endl;
         }
@@ -307,60 +301,16 @@ namespace database {
         }
     }
 
-    void User::update_surname(std::string new_surname) {
+    void User::update_email() {
         try {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement update(session);
 
-            update << "UPDATE users SET surname=$1 WHERE login=$2",
-                use(new_surname),
+            update << "UPDATE users SET email=$1 WHERE id=$2",
+                use(_email),
                 use(_login);
 
             update.execute();
-
-            Poco::Data::Statement select(session);
-            select << "SELECT id FROM users where login=$1",
-                into(_id),
-                use(_login),
-                range(0, 1);
-
-            if (!select.done()) {
-                select.execute();
-            }
-            
-            std::cout << "updated: " << _id << std::endl;
-        }
-        catch (Poco::Data::PostgreSQL::ConnectionException& e) {
-            std::cout << "connection error: " << e.what() << std::endl;
-            throw;
-        }
-        catch (Poco::Data::PostgreSQL::StatementException& e) {
-
-            std::cout << "statement error: " << e.what() << std::endl;
-            throw;
-        }
-    }
-
-    void User::update_email(std::string new_email) {
-        try {
-            Poco::Data::Session session = database::Database::get().create_session();
-            Poco::Data::Statement update(session);
-
-            update << "UPDATE users SET email=$1 WHERE login=$2",
-                use(new_email),
-                use(_login);
-
-            update.execute();
-
-            Poco::Data::Statement select(session);
-            select << "SELECT id FROM users where login=$1",
-                into(_id),
-                use(_login),
-                range(0, 1);
-
-            if (!select.done()) {
-                select.execute();
-            }
             
             std::cout << "updated: " << _id << std::endl;
         }
@@ -380,9 +330,8 @@ namespace database {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement remove(session);
 
-            remove << "DELETE FROM users WHERE login=$1 and password=$2",
-                use(_login),
-                use(_password);
+            remove << "DELETE FROM users WHERE id=$1",
+                use(_id);
 
             remove.execute();
         }
@@ -395,55 +344,6 @@ namespace database {
             std::cout << "statement error: " << e.what() << std::endl;
             throw;
         }
-    }
-
-    bool User::check_credentials() {
-        try {
-            Poco::Data::Session session = database::Database::get().create_session();
-            Statement select(session);
-
-            User tmp;
-            tmp._id = -1;
-
-            select << "SELECT id FROM users where login=$1 and password=$2",
-                into(tmp._id),
-                use(_login),
-                use(_password),
-                range(0, 1);
-            
-            select.execute();
-
-            if (select.done()) {
-                return tmp._id != -1;
-            }
-        }
-        catch (Poco::Data::PostgreSQL::ConnectionException& e) {
-            std::cout << "connection error: " << e.what() << std::endl;
-            throw;
-        }
-        catch (Poco::Data::PostgreSQL::StatementException& e) {
-
-            std::cout << "statement error: " << e.what() << std::endl;
-            throw;
-        }
-
-        return false;
-    }
-
-    const std::string& User::get_login() const {
-        return _login;
-    }
-
-    const std::string& User::get_password() const {
-        return _password;
-    }
-
-    std::string& User::login() {
-        return _login;
-    }
-
-    std::string& User::password() {
-        return _password;
     }
 
     long User::get_id() const {
@@ -462,19 +362,35 @@ namespace database {
         return _email;
     }
 
-    long& User::id() {
-        return _id;
+    const std::string& User::get_login() const {
+        return _login;
     }
 
-    std::string& User::name() {
-        return _name;
+    const std::string& User::get_password() const {
+        return _password;
     }
 
-    std::string& User::surname() {
-        return _surname;
+    void User::set_id(const long& value) {
+        _id = value;
     }
 
-    std::string& User::email() {
-        return _email;
+    void User::set_name(const std::string& value) {
+        _name = value;
+    }
+
+    void User::set_surname(const std::string& value) {
+        _surname = value;
+    }
+
+    void User::set_email(const std::string& value) {
+        _email = value;
+    }
+
+    void User::set_login(const std::string& value) {
+        _login = value;
+    }
+
+    void User::set_password(const std::string& value) {
+        _password = value;
     }
 }
