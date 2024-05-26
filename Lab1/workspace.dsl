@@ -49,7 +49,6 @@ workspace {
 
             user_service -> user_cache "Получение/обновление данных о пользователях" "TCP:6379"
             user_service -> user_delivery_database "Получение/обновление данных о пользователях" "TCP:5432"
-            delivery_service -> user_service "Аутентификация пользователя" "REST HTTP:443"
 
             delivery_service -> package_database "Получение/обновление данных о посылках" "TCP:27018"
             delivery_service -> user_delivery_database "Получение/обновление данных о доставке" "TCP:5432"
