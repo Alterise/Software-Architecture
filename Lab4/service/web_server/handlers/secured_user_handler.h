@@ -204,7 +204,7 @@ public:
         root->set("title", "Internal exception");
         root->set("status", Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);
         root->set("detail", "request ot found");
-        root->set("instance", "/pizza_order");
+        root->set("instance", "/user");
         std::ostream &ostr = response.send();
         Poco::JSON::Stringifier::stringify(root, ostr);
     }
