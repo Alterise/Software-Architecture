@@ -7,7 +7,6 @@
 #include "Poco/Crypto/DigestEngine.h"
 
 #include "handlers/user_handler.h"
-#include "handlers/secured_user_handler.h"
 
 
 class HTTPRequestFactory: public Poco::Net::HTTPRequestHandlerFactory {
@@ -22,12 +21,8 @@ public:
         std::vector<std::string> path_segments;
         uri.getPathSegments(path_segments);
 
-        if (!path_segments.empty() && path_segments[0] == "user") { 
-            if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT || request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE) { 
-                return new SecuredHandler(_format, _digestEngine);
-            } else {
-                return new UserHandler(_format, _digestEngine);
-            }
+        if (!path_segments.empty() && path_segments[0] == "user") {
+            return new UserHandler(_format, _digestEngine);
         } 
 
         return 0;

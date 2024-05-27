@@ -8,48 +8,45 @@
 
 #include "cache.h"
 
-namespace database
-{
-    std::mutex _mtx;
-    Cache::Cache()
-    {
-        std::string host = Config::get().get_cache_addr().substr(0,
-                                                                    Config::get().get_cache_addr().find(':'));
-        std::string port = Config::get().get_cache_addr().substr(Config::get().get_cache_addr().find(':') + 1);
+namespace database {
 
-        std::cout << "cache host:" << host <<" port:" << port << std::endl;
-        _stream = rediscpp::make_stream(host, port);
-    }
+std::mutex Cache::_mtx;
 
-    Cache Cache::get()
-    {
-        static Cache instance;
-        return instance;
-    }
+Cache::Cache() {
+    std::string host = Config::get().get_cache_host();
+    std::string port = Config::get().get_cache_port();
 
-    void Cache::put([[maybe_unused]] const std::string &id, [[maybe_unused]] const std::string &val)
-    {
-        std::lock_guard<std::mutex> lck(_mtx);
-        rediscpp::value response = rediscpp::execute(*_stream, "set",
-                                                     id,
-                                                     val, "ex", "60");
-    }
+    std::cout << "cache host:" << host <<" port:" << port << std::endl;
+    
+    _stream = rediscpp::make_stream(host, port);
+}
 
-    bool Cache::get([[maybe_unused]] const std::string & id, [[maybe_unused]] std::string &val)
-    {
-        try{
-        std::lock_guard<std::mutex> lck(_mtx);
-        rediscpp::value response = rediscpp::execute(*_stream, "get", id);
+Cache Cache::get() {
+    static Cache instance;
+    return instance;
+}
 
-        if (response.is_error_message())
-            return false;
-        if (response.empty())
-            return false;
+void Cache::put(const std::string& key, const std::string& value) {
+    std::unique_lock<std::mutex> lck(_mtx);
 
-        val = response.as<std::string>();
-        return true;
-        }catch(...){
-            return false;
+    rediscpp::value response = rediscpp::execute(*_stream, "set", key,
+                                                 value, "ex", "60");
+}
+
+std::string Cache::get(const std::string& key) {
+    try {
+        std::unique_lock<std::mutex> lck(_mtx);
+
+        rediscpp::value response = rediscpp::execute(*_stream, "get", key);
+
+        if (response.is_error_message() || response.empty()) {
+            return "";
         }
-    }
+
+        return response.as<std::string>();
+    } catch(...) {}
+
+    return "";
+}
+
 }

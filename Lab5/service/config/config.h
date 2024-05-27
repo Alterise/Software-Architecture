@@ -10,7 +10,8 @@ private:
     std::string _db_login;
     std::string _db_password;
     std::string _db_database;
-    std::string _cache_addr;
+    std::string _cache_host;
+    std::string _cache_port;
 
 public:
     static Config& get();
@@ -20,5 +21,6 @@ public:
     const std::string& get_db_login() const;
     const std::string& get_db_password() const;
     const std::string& get_db_database() const;
-    const std::string& get_cache_addr() const;
+    const std::string& get_cache_host() const;
+    const std::string& get_cache_port() const;
 };

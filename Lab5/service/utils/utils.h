@@ -8,6 +8,7 @@
 #include "Poco/JWT/Token.h"
 #include "Poco/JWT/Signer.h"
 
+namespace utils::auth {
 
 // returns login and password
 std::tuple<std::string, std::string> get_identity(const std::string& identity) {
@@ -67,4 +68,27 @@ bool extract_payload(const std::string &jwt_token, long& id, std::string& login)
         std::cout << "Token verification failed" << std::endl;
     }
     return false;
+}
+
+}
+
+
+namespace utils::cache {
+
+std::string get_cache_key(const std::string& method, const std::string& host, const std::string& URI, const std::string& auth) {
+    return method + ":" + host + ":" + URI + ":" + auth;
+}
+
+std::string get_cached(const std::string& method, const std::string& host, const std::string& URI, const std::string& auth) {
+    std::string key = get_cache_key(method, host, URI, auth);
+
+    return database::Cache::get().get(key);
+}
+
+void put_cache(const std::string& method, const std::string& host, const std::string& URI, const std::string& auth, const std::string& value) {
+    std::string key = get_cache_key(method, host, URI, auth);
+
+    database::Cache::get().put(key, value);
+}
+
 }

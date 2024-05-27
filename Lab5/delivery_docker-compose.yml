@@ -13,7 +13,7 @@ services:
       - DB_PASSWORD=admin
       - DB_DATABASE=archdb
       - JWT_KEY=lrAvY1VBQMEaJIDSrhDgz5clj6oJGwqY
-      - CACHE=cache_db:6379
+      - CACHE_ADDR=cache_db:6379
     depends_on:
       db:
         condition: service_healthy
