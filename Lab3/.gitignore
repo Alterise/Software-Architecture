@@ -1,2 +1,3 @@
 .vscode
-service/build
+delivery_service/build
+user_service/build

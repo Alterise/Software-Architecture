@@ -30,6 +30,7 @@ const std::string& Config::get_db_login() const {
 const std::string& Config::get_db_password() const {
     return _db_password;
 }
+
 const std::string& Config::get_db_database() const {
     return _db_database;
 }
