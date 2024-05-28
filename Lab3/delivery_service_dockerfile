@@ -1,8 +1,15 @@
 FROM ubuntu
 ENV TZ=Europe/Moscow
-RUN apt-get update && apt-get install -y git cmake g++ libpq-dev postgresql-client openssl libssl-dev libmysqlclient-dev libboost-all-dev\
-    && apt-get clean
 
+RUN apt-get update
+
+RUN apt-get install -y git cmake g++
+
+RUN apt-get install -y libpq-dev postgresql-client
+
+RUN apt-get install -y openssl libssl-dev libmysqlclient-dev
+
+RUN apt-get install -y libboost-all-dev && apt-get clean
 
 RUN git clone -b poco-1.13.3-release https://github.com/pocoproject/poco.git &&\
     cd poco &&\
