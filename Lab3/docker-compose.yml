@@ -32,6 +32,8 @@ services:
       - DB_HOST=delivery_db
       - DB_PORT=27017
       - DB_DATABASE=deliverydb
+      - CACHE_HOST=cache_db
+      - CACHE_PORT=6379
     depends_on:
       delivery_db:
         condition: service_healthy

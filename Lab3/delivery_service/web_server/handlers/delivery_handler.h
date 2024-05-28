@@ -13,7 +13,6 @@
 #include <Poco/DateTimeParser.h>
 
 #include "database/delivery.h"
-#include "web_server/checks.h"
 #include "utils/utils.h"
 
 class DeliveryHandler : public Poco::Net::HTTPRequestHandler {

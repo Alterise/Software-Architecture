@@ -4,15 +4,13 @@
 
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <Poco/Net/HTTPRequestHandlerFactory.h>
-#include <Poco/Crypto/DigestEngine.h>
 
 #include "handlers/delivery_handler.h"
 
 
 class HTTPRequestFactory: public Poco::Net::HTTPRequestHandlerFactory {
 public:
-    HTTPRequestFactory(const std::string& format): 
-        _format(format), _digestEngine(new Poco::Crypto::DigestEngine("SHA256")) {}
+    HTTPRequestFactory(const std::string& format): _format(format) {}
 
     Poco::Net::HTTPRequestHandler* createRequestHandler(const Poco::Net::HTTPServerRequest& request) {
         std::cout << "request:" << request.getURI() << std::endl;
@@ -30,5 +28,4 @@ public:
 
 private:
     std::string _format;
-    std::shared_ptr<Poco::Crypto::DigestEngine> _digestEngine;
 };
