@@ -7,7 +7,6 @@ services:
       context: .
       dockerfile: gateway_dockerfile
     environment:
-      - JWT_KEY=lrAvY1VBQMEaJIDSrhDgz5clj6oJGwqY
       - CACHE_HOST=cache_db
       - CACHE_PORT=6379
       - USER_ADDRESS=http://user_service:8080
@@ -15,7 +14,7 @@ services:
     ports:
       - 8888:8888
     networks:
-      - lab05-network
+      - delivery-network
   user_service:
     tty: true
     container_name: user_service
