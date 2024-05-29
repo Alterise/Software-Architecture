@@ -115,8 +115,15 @@ public:
             std::string login, password;
             if (scheme == "Basic") {
                 std::string token = get_request(Poco::Net::HTTPRequest::HTTP_GET, base_url_user, "/user/auth", info, "", "");
+
                 std::cout << "# api gateway - auth :" << token << std::endl;
                 if (!token.empty()) {
+                    Poco::JSON::Parser parser;
+                    Poco::Dynamic::Var result = parser.parse(token);
+                    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+
+                    token = object->getValue<std::string>("Token");
+
                     std::string service_name{"delivery"};
                     if(circuit_breaker.check(service_name)) {
                         std::cout << "# api gateway - request from service" << std::endl;
