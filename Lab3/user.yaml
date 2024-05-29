@@ -1,7 +1,7 @@
 openapi: '3.0.0'
 info:
   version: '1.0.0'
-  title: 'Lab 4'
+  title: 'Lab 3'
   description: API для сервиса доставки
 servers:
   - url: http://localhost:8080

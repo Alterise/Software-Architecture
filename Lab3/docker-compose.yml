@@ -32,6 +32,7 @@ services:
       - DB_HOST=delivery_db
       - DB_PORT=27017
       - DB_DATABASE=deliverydb
+      - JWT_KEY=lrAvY1VBQMEaJIDSrhDgz5clj6oJGwqY
       - CACHE_HOST=cache_db
       - CACHE_PORT=6379
     depends_on:

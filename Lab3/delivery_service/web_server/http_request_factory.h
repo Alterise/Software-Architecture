@@ -13,17 +13,9 @@ public:
     HTTPRequestFactory(const std::string& format): _format(format) {}
 
     Poco::Net::HTTPRequestHandler* createRequestHandler(const Poco::Net::HTTPServerRequest& request) {
-        std::cout << "request:" << request.getURI() << std::endl;
-        auto uri = Poco::URI(request.getURI());
+        std::cout << "request: " << request.getMethod() << " " << request.getURI() << std::endl;
         
-        std::vector<std::string> path_segments;
-        uri.getPathSegments(path_segments);
-
-        if (!path_segments.empty() && path_segments[0] == "delivery") {
-            return new DeliveryHandler(_format);
-        } 
-
-        return 0;
+        return new DeliveryHandler(_format);
     }
 
 private:

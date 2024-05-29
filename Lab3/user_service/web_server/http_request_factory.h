@@ -16,16 +16,8 @@ public:
 
     Poco::Net::HTTPRequestHandler* createRequestHandler(const Poco::Net::HTTPServerRequest& request) {
         std::cout << "request:" << request.getURI() << std::endl;
-        auto uri = Poco::URI(request.getURI());
         
-        std::vector<std::string> path_segments;
-        uri.getPathSegments(path_segments);
-
-        if (!path_segments.empty() && path_segments[0] == "user") {
-            return new UserHandler(_format, _digestEngine);
-        } 
-
-        return 0;
+        return new UserHandler(_format, _digestEngine);
     }
 
 private:

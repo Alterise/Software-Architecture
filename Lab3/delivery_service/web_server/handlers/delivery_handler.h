@@ -26,6 +26,67 @@ public:
         try {
             auto uri = Poco::URI(request.getURI());
 
+            std::string scheme;
+            std::string info;
+            
+            long id {-1};
+
+            std::string login;
+
+            try {
+                request.getCredentials(scheme, info);
+            } catch(...) {
+                response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                response.setChunkedTransferEncoding(true);
+                response.setContentType("application/json");
+                Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                root->set("type", "/errors/not_authorized");
+                root->set("title", "Internal exception");
+                root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                root->set("detail", "user not authorized");
+                root->set("instance", "/delivery");
+                std::ostream &ostr = response.send();
+                Poco::JSON::Stringifier::stringify(root, ostr);
+
+                return;
+            }
+
+            std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
+            
+            if(scheme == "Bearer") {
+                if(!utils::auth::extract_payload(info, id, login)) {
+                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                    root->set("type", "/errors/not_authorized");
+                    root->set("title", "Internal exception");
+                    root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                    root->set("detail", "user not authorized");
+                    root->set("instance", "/delivery");
+                    std::ostream &ostr = response.send();
+                    Poco::JSON::Stringifier::stringify(root, ostr);
+
+                    return;
+                }
+
+                std::cout << "user id: " << id << " user login:" << login << std::endl;
+            } else {
+                response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                response.setChunkedTransferEncoding(true);
+                response.setContentType("application/json");
+                Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                root->set("type", "/errors/not_authorized");
+                root->set("title", "Internal exception");
+                root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                root->set("detail", "user not authorized");
+                root->set("instance", "/delivery");
+                std::ostream &ostr = response.send();
+                Poco::JSON::Stringifier::stringify(root, ostr);
+
+                return;
+            }
+
             if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET && uri.getPath() == "/delivery" && form.has("delivery_id") ) {
                 auto result = database::Delivery::read_by_delivery_id(std::stol(form.get("delivery_id")));
 
@@ -165,7 +226,7 @@ public:
         root->set("title", "Internal exception");
         root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND));
         root->set("detail", "request not found");
-        root->set("instance", "/user");
+        root->set("instance", "/delivery");
 
         std::ostream& ostr = response.send();
         Poco::JSON::Stringifier::stringify(root, ostr);

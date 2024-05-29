@@ -41,12 +41,28 @@ public:
                     std::string scheme;
                     std::string info;
 
-                    request.getCredentials(scheme, info);
+                    try {
+                        request.getCredentials(scheme, info);
+                    } catch(...) {
+                        response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                        root->set("type", "/errors/not_authorized");
+                        root->set("title", "Internal exception");
+                        root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                        root->set("detail", "user not authorized");
+                        root->set("instance", "/delivery");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(root, ostr);
+
+                        return;
+                    }
 
                     std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
 
                     if (scheme == "Basic") {
-                        std::string cache_result = utils::cache::get_cached("AUTH", request.getHost(), request.getURI(), info);
+                        std::string cache_result = utils::cache::get_cached(request.getMethod(), request.getHost(), request.getURI(), info);
 
                         if(!cache_result.empty()){
                             std::cout << "# from cache: " << cache_result << std::endl;
@@ -92,6 +108,7 @@ public:
                     root->set("instance", "/auth");
                     std::ostream &ostr = response.send();
                     Poco::JSON::Stringifier::stringify(root, ostr);
+
                     return;
                 } else if (uri.getPath() == "/user/search" && form.has("name") && form.has("surname")) {
                     std::string cache_result = utils::cache::get_cached(request.getMethod(), request.getHost(), request.getURI(), "");
@@ -137,7 +154,7 @@ public:
                     std::string cache_result = utils::cache::get_cached(request.getMethod(), request.getHost(), request.getURI(), "");
 
                     if(!cache_result.empty()){
-                        // std::cout << "# from cache: " << cache_result << std::endl;
+                        std::cout << "# from cache: " << cache_result << std::endl;
 
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
@@ -176,7 +193,7 @@ public:
                         root->set("type", "/errors/not_found");
                         root->set("title", "Internal exception");
                         root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND));
-                        root->set("detail", "user ot found");
+                        root->set("detail", "user not found");
                         root->set("instance", "/user");
 
                         std::ostream &ostr = response.send();
@@ -185,7 +202,7 @@ public:
                         return;
                     }
                 }
-            } else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST) {
+            } else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST && uri.getPath() == "/user") {
                 if (form.has("name") && form.has("surname") && form.has("email") && form.has("login") && form.has("password")) {
                     database::User user;
 
@@ -257,8 +274,8 @@ public:
                         return;
                     }
                 }
-            } else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT || 
-                       request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE) {
+            } else if (uri.getPath() == "/user" && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT || 
+                       request.getMethod() == Poco::Net::HTTPRequest::HTTP_DELETE)) {
                 std::string scheme;
                 std::string info;
                 
@@ -266,7 +283,23 @@ public:
 
                 std::string login;
 
-                request.getCredentials(scheme, info);
+                try {
+                    request.getCredentials(scheme, info);
+                } catch(...) {
+                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                    root->set("type", "/errors/not_authorized");
+                    root->set("title", "Internal exception");
+                    root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                    root->set("detail", "user not authorized");
+                    root->set("instance", "/delivery");
+                    std::ostream &ostr = response.send();
+                    Poco::JSON::Stringifier::stringify(root, ostr);
+
+                    return;
+                }
 
                 std::cout << "scheme: " << scheme << " identity: " << info << std::endl;
                 
@@ -283,11 +316,26 @@ public:
                         root->set("instance", "/user");
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(root, ostr);
-                        return;                   
-                    }
-                }
 
-                std::cout << "id:" << id << " login:" << login << std::endl;
+                        return;
+                    }
+
+                    std::cout << "id:" << id << " login:" << login << std::endl;
+                } else {
+                    response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+                    Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                    root->set("type", "/errors/not_authorized");
+                    root->set("title", "Internal exception");
+                    root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
+                    root->set("detail", "user not authorized");
+                    root->set("instance", "/user");
+                    std::ostream &ostr = response.send();
+                    Poco::JSON::Stringifier::stringify(root, ostr);
+
+                    return;
+                }
 
                 if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_PUT) {
                     database::User user;
