@@ -1,0 +1,4 @@
+.vscode
+delivery_service/build
+user_service/build
+gateway/build
