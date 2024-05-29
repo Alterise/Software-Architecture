@@ -52,7 +52,7 @@ public:
                         root->set("title", "Internal exception");
                         root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
                         root->set("detail", "user not authorized");
-                        root->set("instance", "/delivery");
+                        root->set("instance", "/user");
                         std::ostream &ostr = response.send();
                         Poco::JSON::Stringifier::stringify(root, ostr);
 
@@ -294,7 +294,7 @@ public:
                     root->set("title", "Internal exception");
                     root->set("status", std::to_string(Poco::Net::HTTPResponse::HTTPStatus::HTTP_FORBIDDEN));
                     root->set("detail", "user not authorized");
-                    root->set("instance", "/delivery");
+                    root->set("instance", "/user");
                     std::ostream &ostr = response.send();
                     Poco::JSON::Stringifier::stringify(root, ostr);
 
