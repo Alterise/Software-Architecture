@@ -30,6 +30,6 @@ RUN git clone https://github.com/tdv/redis-cpp.git &&\
     cd && rm redis-cpp -rf
 
 RUN ldconfig
-ADD ./delivery_service /delivery_service
-RUN cd /delivery_service && mkdir build && cd build && cmake  .. && make
+ADD ./gateway /gateway
+RUN cd /gateway && mkdir build && cd build && cmake  .. && make
 ENTRYPOINT [ "/gateway/build/gateway" ]
